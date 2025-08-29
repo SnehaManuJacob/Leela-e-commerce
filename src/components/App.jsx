@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CartProvider } from "./CartContext";
 import Home from "./Home";
 import Navbar from "./Navbar";
@@ -7,12 +7,46 @@ import CartPage from "./CartPage";
 import DescriptionPage from "./DescriptionPage";
 import UnderConstruction from "./UnderConstruction";
 import Footer from "./Footer";
+import Login from "./Login";
+import { supabase } from "../api/supabase";
+import { fetchCategories } from "../api/categories"; // ADD THIS IMPORT
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [user, setUser] = useState(null);
+  const [categories, setCategories] = useState([]); // ADD CATEGORIES STATE
+
+  // Check authentication state on app load
+  useEffect(() => {
+    checkAuthState();
+    loadCategories(); // Load categories on app start
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Function to check authentication state
+  const checkAuthState = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user || null);
+  };
+
+  // Function to load categories
+  const loadCategories = async () => {
+    try {
+      const data = await fetchCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   // Handle category selection from navbar
   const handleCategorySelect = (category) => {
@@ -27,6 +61,20 @@ function App() {
 
   // Handle navigation
   const handleNavigate = (page) => {
+    // If trying to access protected pages without login, redirect to login
+    if ((page === "cart" || page === "profile") && !user) {
+      setCurrentPage("login");
+      return;
+    }
+
+    // Handle logout
+    if (page === "logout") {
+      supabase.auth.signOut();
+      setUser(null);
+      setCurrentPage("home");
+      return;
+    }
+
     setCurrentPage(page);
 
     // Reset search/category when going to home
@@ -64,6 +112,11 @@ function App() {
     setCurrentPage("home");
   };
 
+  // Handle successful login
+  const handleLoginSuccess = () => {
+    setCurrentPage("home");
+  };
+
   return (
     <CartProvider>
       <div className="App">
@@ -71,12 +124,23 @@ function App() {
           onCategorySelect={handleCategorySelect}
           onSearchSubmit={handleSearchSubmit}
           onNavigate={handleNavigate}
+          user={user}
+          categories={categories} // PASS CATEGORIES TO NAVBAR
         />
 
         {currentPage === "home" && (
           <Home
             onAboutUsClick={handleAboutUsClick}
             onShopNowClick={() => setCurrentPage("products")}
+            user={user}
+          />
+        )}
+
+        {currentPage === "login" && (
+          <Login
+            onBack={() => setCurrentPage("home")}
+            onNavigate={handleNavigate}
+            onLoginSuccess={handleLoginSuccess}
           />
         )}
 
@@ -85,6 +149,7 @@ function App() {
             initialCategory={selectedCategory}
             initialSearchTerm={searchTerm}
             onProductClick={handleProductClick}
+            user={user}
           />
         )}
 
@@ -92,11 +157,15 @@ function App() {
           <DescriptionPage
             product={selectedProduct}
             onBack={handleBackFromDescription}
+            user={user}
           />
         )}
 
         {currentPage === "cart" && (
-          <CartPage onContinueShopping={handleContinueShopping} />
+          <CartPage 
+            onContinueShopping={handleContinueShopping}
+            user={user}
+          />
         )}
 
         {currentPage === "about" && (

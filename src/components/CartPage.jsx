@@ -1,18 +1,21 @@
 import React, { useState } from "react";
 import { useCart } from "./CartContext";
 import CartCard from "./CartCard";
+import CheckoutModal from "./CheckoutModal"; // We'll create this next
+import { supabase } from "../api/supabase";
 
 export default function CartPage({ onContinueShopping }) {
-  const { items, clearCart, getCartTotals } = useCart();
+  const { items, clearCart, getCartTotals, createOrder } = useCart();
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const totals = getCartTotals();
   const subtotal = parseFloat(totals.subtotal);
   const shipping = parseFloat(totals.shipping);
   let finalTotal = parseFloat(totals.total);
 
-  // Handle discount code
   const handleApplyDiscount = () => {
     const validCodes = {
       SAVE10: { type: "percentage", value: 10 },
@@ -42,9 +45,39 @@ export default function CartPage({ onContinueShopping }) {
   const discountAmount = getDiscountAmount();
   finalTotal = Math.max(0, finalTotal - discountAmount);
 
-  const handleContinueShopping = () => {
-    if (onContinueShopping) {
-      onContinueShopping();
+  const handleCheckout = async (shippingData) => {
+    setCheckoutLoading(true);
+    try {
+      console.log('🚀 Starting checkout process');
+      
+      // Get current user from Supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('❌ User auth error:', userError);
+        throw new Error(`Authentication error: ${userError.message}`);
+      }
+      
+      if (!user) {
+        throw new Error("User not authenticated - please log in again");
+      }
+
+      console.log('✅ User authenticated:', user.id);
+
+      // Create order in database
+      console.log('📦 Creating order with shipping data:', shippingData);
+      const order = await createOrder(user, shippingData);
+      
+      console.log('🎉 Order created successfully:', order);
+      
+      alert(`Order created successfully! Your order ID is: ${order.id}`);
+      setShowCheckoutModal(false);
+      
+    } catch (error) {
+      console.error('💥 Checkout process failed:', error);
+      alert(`Error: ${error.message}. Please try again or contact support.`);
+    } finally {
+      setCheckoutLoading(false);
     }
   };
 
@@ -59,7 +92,7 @@ export default function CartPage({ onContinueShopping }) {
             </p>
             <button
               className="btn btn-primary btn-custom"
-              onClick={handleContinueShopping}
+              onClick={onContinueShopping}
             >
               Continue Shopping
             </button>
@@ -70,118 +103,133 @@ export default function CartPage({ onContinueShopping }) {
   }
 
   return (
-    <div className="container py-4">
-      <div className="row">
-        {/* Cart Items */}
-        <div className="col-lg-8">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="mb-0 section-title">Shopping Cart</h2>
-            <button
-              className="btn btn-outline-danger btn-sm"
-              onClick={clearCart}
-            >
-              Clear Cart
-            </button>
-          </div>
-
-          {/* Cart Items List */}
-          <div className="bg-white rounded p-3">
-            {items.map((item) => (
-              <CartCard key={item.id} item={item} />
-            ))}
-          </div>
-
-          {/* Continue Shopping */}
-          <div className="mt-3">
-            <button
-              className="btn btn-custom btn-outline-primary"
-              onClick={handleContinueShopping}
-            >
-              ← Continue Shopping
-            </button>
-          </div>
-        </div>
-
-        {/* Order Summary */}
-        <div className="col-lg-4 mt-4 mt-lg-0">
-          <div className="bg-white rounded shadow-sm p-4 sticky-top">
-            <h4 className="mb-4 section-title">Order Summary</h4>
-
-            {/* Subtotal */}
-            <div className="d-flex justify-content-between mb-2">
-              <span>Subtotal ({totals.itemCount} items)</span>
-              <span>₹{totals.subtotal}</span>
+    <>
+      <div className="container py-4">
+        <div className="row">
+          {/* Cart Items */}
+          <div className="col-lg-8">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h2 className="mb-0 section-title">Shopping Cart</h2>
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={clearCart}
+              >
+                Clear Cart
+              </button>
             </div>
 
-            {/* Shipping */}
-            <div className="d-flex justify-content-between mb-2">
-              <span>Shipping</span>
-              <span>
-                {shipping === 0 ? (
-                  <span className="text-success">Free</span>
-                ) : (
-                  `₹${totals.shipping}`
-                )}
-              </span>
+            {/* Cart Items List */}
+            <div className="bg-white rounded p-3">
+              {items.map((item, index) => (
+                <CartCard key={`${item.id}-${item.selectedColor}-${item.selectedSize}-${index}`} item={item} />
+              ))}
             </div>
 
-            {/* Discount */}
-            {appliedDiscount && (
-              <div className="d-flex justify-content-between mb-2 text-success">
-                <span>Discount ({appliedDiscount.code})</span>
-                <span>-₹{discountAmount.toFixed(2)}</span>
+            {/* Continue Shopping */}
+            <div className="mt-3">
+              <button
+                className="btn btn-custom btn-outline-primary"
+                onClick={onContinueShopping}
+              >
+                ← Continue Shopping
+              </button>
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <div className="col-lg-4 mt-4 mt-lg-0">
+            <div className="bg-white rounded shadow-sm p-4 sticky-top">
+              <h4 className="mb-4 section-title">Order Summary</h4>
+
+              {/* Subtotal */}
+              <div className="d-flex justify-content-between mb-2">
+                <span>Subtotal ({totals.itemCount} items)</span>
+                <span>₹{totals.subtotal}</span>
               </div>
-            )}
 
-            <hr />
-
-            {/* Total */}
-            <div className="d-flex justify-content-between mb-4">
-              <strong>Total</strong>
-              <strong>₹{finalTotal.toFixed(2)}</strong>
-            </div>
-
-            {/* Discount Code */}
-            <div className="mb-3">
-              <label className="form-label small text-muted">
-                DISCOUNT CODE
-              </label>
-              <div className="d-flex">
-                <input
-                  type="text"
-                  className="form-control form-control-sm me-2"
-                  placeholder="Enter code"
-                  value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value)}
-                />
-                <button
-                  className="btn btn-outline-secondary btn-sm"
-                  onClick={handleApplyDiscount}
-                >
-                  Apply
-                </button>
+              {/* Shipping */}
+              <div className="d-flex justify-content-between mb-2">
+                <span>Shipping</span>
+                <span>
+                  {shipping === 0 ? (
+                    <span className="text-success">Free</span>
+                  ) : (
+                    `₹${totals.shipping}`
+                  )}
+                </span>
               </div>
+
+              {/* Discount */}
               {appliedDiscount && (
-                <small className="text-success">
-                  ✓ Discount applied: {appliedDiscount.code}
+                <div className="d-flex justify-content-between mb-2 text-success">
+                  <span>Discount ({appliedDiscount.code})</span>
+                  <span>-₹{discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+
+              <hr />
+
+              {/* Total */}
+              <div className="d-flex justify-content-between mb-4">
+                <strong>Total</strong>
+                <strong>₹{finalTotal.toFixed(2)}</strong>
+              </div>
+
+              {/* Discount Code */}
+              <div className="mb-3">
+                <label className="form-label small text-muted">
+                  DISCOUNT CODE
+                </label>
+                <div className="d-flex">
+                  <input
+                    type="text"
+                    className="form-control form-control-sm me-2"
+                    placeholder="Enter code"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                  />
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={handleApplyDiscount}
+                  >
+                    Apply
+                  </button>
+                </div>
+                {appliedDiscount && (
+                  <small className="text-success">
+                    ✓ Discount applied: {appliedDiscount.code}
+                  </small>
+                )}
+              </div>
+
+              {/* Checkout Button */}
+              <button 
+                className="btn btn-dark w-100 mb-3 btn-custom"
+                onClick={() => setShowCheckoutModal(true)}
+                disabled={checkoutLoading}
+              >
+                {checkoutLoading ? 'Processing...' : 'Checkout Now'}
+              </button>
+
+              {/* Free Shipping Notice */}
+              {shipping > 0 && (
+                <small className="text-muted text-center d-block">
+                  Add ₹{(500 - subtotal).toFixed(2)} more for free shipping
                 </small>
               )}
             </div>
-
-            {/* Checkout Button */}
-            <button className="btn btn-dark w-100 mb-3 btn-custom">
-              Checkout Now
-            </button>
-
-            {/* Free Shipping Notice */}
-            {shipping > 0 && (
-              <small className="text-muted text-center d-block">
-                Add ₹{(500 - subtotal).toFixed(2)} more for free shipping
-              </small>
-            )}
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+  show={showCheckoutModal}
+  onClose={() => setShowCheckoutModal(false)}
+  onCheckout={handleCheckout} // This is the important part!
+  loading={checkoutLoading}
+  total={finalTotal}
+/>
+    </>
   );
 }

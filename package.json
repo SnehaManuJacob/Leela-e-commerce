@@ -5,12 +5,13 @@
   "keywords": [],
   "main": "src/index.js",
   "dependencies": {
+    "@supabase/supabase-js": "^2.56.0",
+    "bootstrap": "^5.3.7",
+    "framer-motion": "12.23.12",
     "react": "^18.2.0",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^18.2.0",
-    "react-scripts": "^5.0.1",
-    "react-bootstrap": "2.10.10",
-    "bootstrap": "5.3.7",
-    "framer-motion": "12.23.12"
+    "react-scripts": "^5.0.1"
   },
   "devDependencies": {
     "typescript": "^4.9.5"
@@ -18,8 +19,23 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "dev": "react-scripts start"
   },
-  "browserslist": [">0.2%", "not dead", "not ie <= 11", "not op_mini all"]
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SnehaManuJacob/Leela-e-commerce.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SnehaManuJacob/Leela-e-commerce/issues"
+  }
 }

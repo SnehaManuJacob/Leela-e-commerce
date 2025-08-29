@@ -1,7 +1,17 @@
 import React, { useState } from "react";
-import { useCart } from "./CartContext"; // Adjust import path as needed
+import { useCart } from "./CartContext";
 
 export default function ProductCard({ product, onProductClick }) {
+  if (!product) {
+    return (
+      <div className="card h-100 product-card">
+        <div className="card-body d-flex align-items-center justify-content-center">
+          <div className="text-muted">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
 
@@ -21,15 +31,18 @@ export default function ProductCard({ product, onProductClick }) {
     }
   };
 
-  const parsePrice = (priceString) => {
-    return parseFloat(priceString.replace(/[₹$,]/g, ""));
-  };
+  // Simplified price handling
+  const currentPrice = typeof product.price === 'number' 
+    ? product.price 
+    : parseFloat(product.price) || 0;
 
-  const currentPrice = parsePrice(product.price);
-  const originalPrice = product.originalPrice
-    ? parsePrice(product.originalPrice)
+  const originalPrice = product.original_price 
+    ? (typeof product.original_price === 'number' 
+        ? product.original_price 
+        : parseFloat(product.original_price) || 0)
     : null;
-  const discount = originalPrice
+
+  const discount = originalPrice && originalPrice > currentPrice
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
@@ -41,9 +54,9 @@ export default function ProductCard({ product, onProductClick }) {
     >
       <div className="position-relative overflow-hidden">
         <img
-          src={product.img}
+          src={product.img || '/placeholder-image.jpg'}
           className="card-img-top"
-          alt={product.name}
+          alt={product.name || 'Product'}
           style={{
             height: "250px",
             objectFit: "cover",
@@ -54,6 +67,9 @@ export default function ProductCard({ product, onProductClick }) {
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = "scale(1)";
+          }}
+          onError={(e) => {
+            e.target.src = '/placeholder-image.jpg';
           }}
         />
 
@@ -72,8 +88,8 @@ export default function ProductCard({ product, onProductClick }) {
       </div>
 
       <div className="card-body text-start d-flex flex-column">
-        <h6 className="product-name mb-1 fw-bold">{product.name}</h6>
-        {product.desc && (
+        <h6 className="product-name mb-1 fw-bold">{product.name || 'Unnamed Product'}</h6>
+        {product.description && (
           <p
             className="product-desc text-muted small mb-2"
             style={{
@@ -83,7 +99,7 @@ export default function ProductCard({ product, onProductClick }) {
               overflow: "hidden",
             }}
           >
-            {product.desc}
+            {product.description}
           </p>
         )}
 
@@ -91,7 +107,7 @@ export default function ProductCard({ product, onProductClick }) {
           <span className="product-price fw-bold h6 mb-0 me-2">
             ₹{currentPrice.toFixed(0)}
           </span>
-          {originalPrice && (
+          {originalPrice && originalPrice > currentPrice && (
             <small className="text-muted text-decoration-line-through">
               ₹{originalPrice.toFixed(0)}
             </small>
@@ -123,8 +139,8 @@ export default function ProductCard({ product, onProductClick }) {
         )}
 
         <button
-          className={`btn w-100  mt-auto ${
-            isAdding ? "btn-success" : "btn-outline-dark btn-custom "
+          className={`btn w-100 mt-auto ${
+            isAdding ? "btn-success" : "btn-outline-dark btn-custom"
           }`}
           onClick={handleAddToCart}
           disabled={isAdding}

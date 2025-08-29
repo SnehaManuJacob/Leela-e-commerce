@@ -28,6 +28,9 @@ body {
   margin-bottom: 20px;
 }
 
+.btn-custom-wm{
+  margin-bottom: 0px !important;
+}
 .customInput {
   border-color: black !important;
   border-radius: 0 !important;
@@ -383,4 +386,43 @@ body {
   content: "\203A";
   font-size: 3rem;
   color: black;
+}
+
+/* Login */
+.login-wrapper {
+  background-color: #f4f0eb;
+}
+
+.login-box {
+  max-width: 400px;
+}
+
+.custom-input {
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.custom-input:focus {
+  border-color: lightpink;
+  box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+}
+
+.login-btn {
+  background: linear-gradient(135deg, lightpink, lightpink);
+  color: white;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 10px;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: linear-gradient(135deg, lightpink, lightpink);
+}
+
+.toggle-btn {
+  color:lightpink;
+  font-weight: 500;
 }

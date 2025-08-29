@@ -1,3 +1,4 @@
+// Navbar.jsx
 import React, { useState } from "react";
 import { useCart } from "./CartContext";
 
@@ -5,6 +6,7 @@ export default function Navbar({
   onCategorySelect,
   onSearchSubmit,
   onNavigate,
+  user
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -12,47 +14,39 @@ export default function Navbar({
 
   const { getCartTotals } = useCart();
   const { itemCount } = getCartTotals();
+  
+  const isLoggedIn = !!user;
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
   const handleCategoryClick = (category, e) => {
     e.preventDefault();
-    setDropdownOpen(false); // Close dropdown
-    if (onCategorySelect) {
-      onCategorySelect(category);
-    }
+    setDropdownOpen(false);
+    if (onCategorySelect) onCategorySelect(category);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (onSearchSubmit) {
-      onSearchSubmit(searchValue);
-    }
+    if (onSearchSubmit) onSearchSubmit(searchValue);
   };
 
-  // Handle search input change
-  const handleSearchChange = (e) => {
-    setSearchValue(e.target.value);
+  const handleSearchChange = (e) => setSearchValue(e.target.value);
+
+  const handleLoginClick = (e) => {
+    e.preventDefault();
+    if (onNavigate) onNavigate(isLoggedIn ? "logout" : "login");
   };
 
-  // Handle cart click
   const handleCartClick = (e) => {
     e.preventDefault();
-    if (onNavigate) {
-      onNavigate("cart");
-    }
+    if (onNavigate) onNavigate("cart");
   };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
       <div className="container-fluid px-4">
-        {/* Logo on Left */}
+        {/* Logo */}
         <a
           className="navbar-brand logo"
           href="#"
@@ -76,7 +70,7 @@ export default function Navbar({
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Menu Items on Right */}
+        {/* Right Menu */}
         <div
           className={`collapse navbar-collapse justify-content-end ${
             mobileMenuOpen ? "show" : ""
@@ -84,7 +78,7 @@ export default function Navbar({
           id="navMenu"
         >
           <ul className="navbar-nav align-items-center">
-            {/* Dropdown */}
+            {/* Category Dropdown */}
             <li className="nav-item dropdown mx-2">
               <a
                 className="nav-link dropdown-toggle"
@@ -100,51 +94,19 @@ export default function Navbar({
                 className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}
                 aria-labelledby="shopDropdown"
               >
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={(e) => handleCategoryClick("All", e)}
-                  >
-                    All
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={(e) => handleCategoryClick("Hair", e)}
-                  >
-                    Hair
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={(e) => handleCategoryClick("Earrings", e)}
-                  >
-                    Earrings
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={(e) => handleCategoryClick("Necklaces", e)}
-                  >
-                    Necklaces
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={(e) => handleCategoryClick("Accesories", e)}
-                  >
-                    Accesories
-                  </a>
-                </li>
+                {["All", "Hair", "Clothing", "Jewelry", "Home"].map(
+                  (cat) => (
+                    <li key={cat}>
+                      <a
+                        className="dropdown-item"
+                        href="#"
+                        onClick={(e) => handleCategoryClick(cat, e)}
+                      >
+                        {cat}
+                      </a>
+                    </li>
+                  )
+                )}
               </ul>
             </li>
 
@@ -152,13 +114,24 @@ export default function Navbar({
             <li className="nav-item mx-2">
               <form className="d-flex" onSubmit={handleSearchSubmit}>
                 <input
-                  className="form-control form-control-sm search-box customInput "
+                  className="form-control form-control-sm search-box customInput"
                   type="search"
                   placeholder="Search"
                   value={searchValue}
                   onChange={handleSearchChange}
                 />
               </form>
+            </li>
+
+            {/* Login/Logout */}
+            <li className="nav-item mx-2">
+              <a
+                className="nav-link position-relative"
+                href="#"
+                onClick={handleLoginClick}
+              >
+                {isLoggedIn ? "Logout" : "Login"}
+              </a>
             </li>
 
             {/* Cart */}

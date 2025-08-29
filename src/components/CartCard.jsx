@@ -4,8 +4,9 @@ import { useCart } from "./CartContext";
 export default function CartCard({ item }) {
   const { updateQuantity, removeFromCart } = useCart();
 
-  const parsePrice = (priceString) => {
-    return parseFloat(priceString.replace(/[₹$,]/g, ""));
+  const parsePrice = (price) => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/[₹$,]/g, "")) || 0;
   };
 
   const price = parsePrice(item.price);
@@ -13,14 +14,14 @@ export default function CartCard({ item }) {
 
   const handleQuantityChange = (newQuantity) => {
     if (newQuantity < 1) {
-      removeFromCart(item.id);
+      removeFromCart(item.id, item.selectedColor, item.selectedSize);
     } else {
-      updateQuantity(item.id, newQuantity);
+      updateQuantity(item.id, newQuantity, item.selectedColor, item.selectedSize);
     }
   };
 
   const handleRemove = () => {
-    removeFromCart(item.id);
+    removeFromCart(item.id, item.selectedColor, item.selectedSize);
   };
 
   return (
@@ -28,19 +29,36 @@ export default function CartCard({ item }) {
       {/* Product Image */}
       <div className="col-md-2 col-3">
         <img
-          src={item.img}
+          src={item.img || '/placeholder-image.jpg'}
           alt={item.name}
           className="img-fluid rounded"
           style={{ maxHeight: "80px", objectFit: "cover" }}
+          onError={(e) => {
+            e.target.src = '/placeholder-image.jpg';
+          }}
         />
       </div>
 
       {/* Product Details */}
       <div className="col-md-4 col-9">
         <h6 className="mb-1 fw-bold">{item.name}</h6>
-        {item.desc && (
-          <small className="text-muted d-block mb-2">{item.desc}</small>
+        
+        {/* Color and Size */}
+        {(item.selectedColor || item.selectedSize) && (
+          <div className="mb-2">
+            {item.selectedColor && (
+              <small className="text-muted me-2">
+                Color: {item.selectedColor}
+              </small>
+            )}
+            {item.selectedSize && (
+              <small className="text-muted">
+                Size: {item.selectedSize}
+              </small>
+            )}
+          </div>
         )}
+        
         <div className="text-muted small">Price: ₹{price.toFixed(2)}</div>
       </div>
 
