@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import { fetchProducts } from "../api/products";
-import { supabase } from "../api/supabase"; // Import supabase directly
+import { supabase } from "../api/supabase"; 
 
 export default function ProductsPage({
   initialCategory = "All",
