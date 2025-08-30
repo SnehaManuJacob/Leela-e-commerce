@@ -48,20 +48,15 @@ export default function CartPage({ onContinueShopping }) {
   const handleCheckout = async (shippingData) => {
     setCheckoutLoading(true);
     try {
-      console.log('🚀 Starting checkout process');
-      
       // Get current user from Supabase
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
       if (userError) {
         console.error('❌ User auth error:', userError);
         throw new Error(`Authentication error: ${userError.message}`);
       }
-      
       if (!user) {
         throw new Error("User not authenticated - please log in again");
       }
-
       console.log('✅ User authenticated:', user.id);
 
       // Create order in database

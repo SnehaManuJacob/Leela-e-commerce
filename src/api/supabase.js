@@ -9,7 +9,7 @@ console.log('Supabase Key present:', !!supabaseAnonKey);
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables!');
-  // Provide fallback for debugging
+  
   console.error('REACT_APP_SUPABASE_URL:', process.env.REACT_APP_SUPABASE_URL);
   console.error('REACT_APP_SUPABASE_ANON_KEY:', process.env.REACT_APP_SUPABASE_ANON_KEY);
 }

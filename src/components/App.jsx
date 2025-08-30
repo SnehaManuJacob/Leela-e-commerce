@@ -9,7 +9,7 @@ import UnderConstruction from "./UnderConstruction";
 import Footer from "./Footer";
 import Login from "./Login";
 import { supabase } from "../api/supabase";
-import { fetchCategories } from "../api/categories"; // ADD THIS IMPORT
+import { fetchCategories } from "../api/categories"; 
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
@@ -17,14 +17,14 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [user, setUser] = useState(null);
-  const [categories, setCategories] = useState([]); // ADD CATEGORIES STATE
+  const [categories, setCategories] = useState([]); 
 
-  // Check authentication state on app load
+  
   useEffect(() => {
     checkAuthState();
-    loadCategories(); // Load categories on app start
+    loadCategories(); 
 
-    // Listen for auth state changes
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -32,13 +32,11 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Function to check authentication state
   const checkAuthState = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setUser(session?.user || null);
   };
 
-  // Function to load categories
   const loadCategories = async () => {
     try {
       const data = await fetchCategories();
@@ -48,7 +46,6 @@ function App() {
     }
   };
 
-  // Handle category selection from navbar
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     setCurrentPage("products");
@@ -59,15 +56,12 @@ function App() {
     setCurrentPage("products");
   };
 
-  // Handle navigation
   const handleNavigate = (page) => {
-    // If trying to access protected pages without login, redirect to login
     if ((page === "cart" || page === "profile") && !user) {
       setCurrentPage("login");
       return;
     }
 
-    // Handle logout
     if (page === "logout") {
       supabase.auth.signOut();
       setUser(null);
@@ -180,7 +174,6 @@ function App() {
           />
         )}
 
-        {/* Footer - appears on all pages except under construction */}
         {currentPage !== "about" && currentPage !== "hero" && <Footer />}
       </div>
     </CartProvider>
